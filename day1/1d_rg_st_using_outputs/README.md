@@ -1,6 +1,6 @@
-![TechSlate](../../../global/images/ts.png)
 
-# Terraform Script: Create Azure Resource Group and Storage Account using Variables
+
+# Terraform Script: Create Azure Resource Group and Storage Account using Outputs
 
 This Terraform script creates an Azure resource group and storage account. The resource group provides a logical container for the storage account and other resources you may create in Azure. The storage account provides a durable and highly available location for storing data, such as files, blobs, and queues.
 
@@ -39,39 +39,37 @@ export ARM_CLIENT_SECRET="VALUE_OF_CLIENT_SECRET"
 
 
 
-
 ## ( Already If you have created Environment variables please ignore , and move to the next step )
-
-
 
 
 ## Usage
 
-- Open the `rg_st_main.tf` file and edit the following variables as needed:
+- Open the `main.tf` file and edit the following variables as needed:
 
-## `rg_st_main.tf`
+## `main.tf`
 ```
 provider "azurerm" {
   features {}
 }
 # Create resource group
 resource "azurerm_resource_group" "main" {
-  name     = var.resource_group_name
+  name     = local.resource_group_name
   location = var.location
 }
 
 # Create storage account
 resource "azurerm_storage_account" "main" {
-  name                     = var.storage_account_name
+  name                     = local.storage_account_name
   resource_group_name      = azurerm_resource_group.main.name
   location                 = var.location
   account_tier             = var.account_tier
   account_replication_type = var.account_replication_type
 }
 ```
-- Open the `rg_st_var.tf` file and edit the following variables as needed:
+- Open the `variables.tf` file and edit the following variables as needed:
 
-## `rg_st_var.tf`
+
+## `variables.tf`
 
 ```
 variable "resource_group_name" {
@@ -104,6 +102,39 @@ variable "account_replication_type" {
   default     = "LRS"
 }
 ```
+- Open the `local.tf` file and edit the following variables as needed:
+
+## `local.tf`
+
+```
+locals {
+  org_name = "ts"  
+  resource_group_name = "${local.org_name}-rg-${var.location}-${var.app_name}-${var.environment}-${format("%02d", var.index)}"
+  storage_account_name = "${local.org_name}st${var.app_name}${var.environment}${format("%02d", var.index)}"
+}
+
+```
+- Open the `outputs.tf` file and edit the following variables as needed:
+
+
+## `outpits.tf`
+
+```
+output "resource_group_name" {
+  value = azurerm_resource_group.main.name
+}
+
+output "storage_account_name" {
+  value = azurerm_storage_account.main.name
+}
+
+output "storage_account_connection_string" {
+  value = azurerm_storage_account.main.primary_connection_string
+  sensitive = true
+}
+```
+
+
 
 # Terraform Commands
 
@@ -111,10 +142,8 @@ variable "account_replication_type" {
 
 ```
 terraform init
-```
+``` 
 ![Visual studio page](images/init.png)
-
-*** 
 
 - ### Validate
 
@@ -137,6 +166,7 @@ terraform apply
 ```
 ![Visual studio page](images/apply.png)
 
-- ### Lets check the portal
+- ### Lets check the portal , we can see that resources got created.
 
 ![Visual studio page](images/portal.png)
+
